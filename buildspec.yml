@@ -1,0 +1,36 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo Installing source Bun dependencies...
+      - cd testpipeline
+      - npm install
+  build:
+    commands:
+      - echo Building the React app...
+      - npm run test:ci
+      - npm run build
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - aws s3 sync build/ s3://testpipelinedeploy20230107 --delete
+
+reports:
+  jest_reports:
+    files:
+      - "junit.xml"
+    file-format: JUNITXML
+    base-directory: "testpipeline/"
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: 'testpipeline/build'
+  discard-paths: yes
+
+cache:
+  paths:
+    - 'testpipeline/node_modules/**/*'
